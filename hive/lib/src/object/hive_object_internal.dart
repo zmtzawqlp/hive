@@ -6,17 +6,18 @@ extension HiveObjectInternal on HiveObject {
   @pragma('vm:prefer-inline')
   @pragma('dart2js:tryInline')
   void init(dynamic key, BoxBase box) {
-    if (_box != null) {
-      if (_box != box) {
+    if (connection.box != null) {
+      if (connection.box != box) {
         throw HiveError('The same instance of an HiveObject cannot '
             'be stored in two different boxes.');
-      } else if (_key != key) {
+      } else if (connection.key != key) {
         throw HiveError('The same instance of an HiveObject cannot '
-            'be stored with two different keys ("$_key" and "$key").');
+            'be stored with two different keys '
+            '("${connection.key}" and "$key").');
       }
     }
-    _box = box;
-    _key = key;
+    connection.box = box;
+    connection.key = key;
   }
 
   /// Not part of public API
@@ -27,8 +28,8 @@ extension HiveObjectInternal on HiveObject {
 
     _hiveLists.clear();
 
-    _box = null;
-    _key = null;
+    connection.box = null;
+    connection.key = null;
   }
 
   /// Not part of public API
