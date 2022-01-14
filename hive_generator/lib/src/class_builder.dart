@@ -45,7 +45,7 @@ class ClassBuilder extends Builder {
       for (int i = 0; i < numOfFields; i++)
         reader.readByte(): reader.read(),
     };
-    return ${cls.name}(
+    final result = ${cls.name}(
     ''');
 
     for (var param in constr.parameters) {
@@ -66,20 +66,16 @@ class ClassBuilder extends Builder {
       }
     }
 
-    code.writeln(')');
+    code.writeln(');');
 
     // There may still be fields to initialize that were not in the constructor
     // as initializing formals. We do so using cascades.
     for (var field in fields) {
-      code.write('..${field.name} = ');
-      code.writeln(_value(
-        field.type,
-        'fields[${field.index}]',
-        field.defaultValue,
-      ));
+      code.writeln(_safeValue(field.type, 'fields[${field.index}]',
+          field.defaultValue, field.name));
     }
 
-    code.writeln(';');
+    code.writeln('return result;');
 
     return code.toString();
   }
@@ -88,6 +84,25 @@ class ClassBuilder extends Builder {
     var value = _cast(type, variable);
     if (defaultValue?.isNull != false) return value;
     return '$variable == null ? ${constantToString(defaultValue!)} : $value';
+  }
+
+  String _safeValue(DartType type, String variable, DartObject? defaultValue,
+      String fieldName) {
+    var value = _cast(type, variable);
+    if (defaultValue?.isNull != false) {
+      return '''if($variable!=null){
+      result.$fieldName= $value;
+    }''';
+    }
+
+    var defaultValueS = constantToString(defaultValue!);
+
+    return '''
+      if(($variable??$defaultValueS)!=null)
+      {
+         result.$fieldName= $variable??$defaultValueS;
+      }
+    ''';
   }
 
   String _cast(DartType type, String variable) {
